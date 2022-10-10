@@ -1,0 +1,19 @@
+{
+  "name": "lendsqr-challenge",
+  "version": "1.0.0",
+  "description": "Lendsqr challenge implementation",
+  "main": "index.js",
+  "repository": "https://github.com/cybermind-nick/lendsqr-be",
+  "author": "Nicholas Ifeajika",
+  "license": "MIT",
+  "dependencies": {
+    "@types/express": "^4.17.14",
+    "@types/node": "^18.8.3",
+    "express": "^4.18.1",
+    "knex": "^2.3.0",
+    "mysql2": "^2.3.3"
+  },
+  "devDependencies": {
+    "better-sqlite3": "^7.6.2"
+  }
+}
