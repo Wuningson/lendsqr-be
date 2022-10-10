@@ -38,6 +38,7 @@ export function transferQuery(db: Knex, sender: any, receipient: any, amount: nu
     } else {
         // reduce sender balance
         sender_balance = sender_balance - total
+        
         // increase receiver balance
         receiver_balance = receiver_balance + amount
 
