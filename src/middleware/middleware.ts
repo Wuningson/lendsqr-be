@@ -5,7 +5,6 @@
 
 import { RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
-import db from '../database/knex';
 import { getUser } from '../database/queries';
 
 export const authenticate: RequestHandler = async (req, res, next) => {
@@ -16,12 +15,12 @@ export const authenticate: RequestHandler = async (req, res, next) => {
     }
 
     const { id } = jwt.verify(token, 'testPrivateKey') as { id: string };
-    const user = await getUser({ db, id });
+    const user = await getUser(req.body.username, req.body.password);
     if (!user) {
       throw new Error('authentication failed');
     }
 
-    req.userId = user.id;
+    req.body.user_id = user.user_id;
     return next();
   } catch (error) {
     return next(error);

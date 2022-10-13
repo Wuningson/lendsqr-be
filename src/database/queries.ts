@@ -1,54 +1,89 @@
-import { Knex } from 'knex';
-import db from './models';
+import { json } from 'stream/consumers';
+import { DataSource } from 'typeorm';
 import { get_fee } from '../utils/get_fee';
+import { hashCompare } from '../utils/hash';
+import { User } from './user.entity';
+
+const transaction_type = {
+  deposit: "deposit",
+  withdrawal: "withdrawal",
+  transfer: "transfer"
+}
 
 // export function depositTransaction(transaction: Transaction)
 
-export function getAmount(db: Knex, user_id: any): any {
-  return db('account')
-    .where({
-      user_id: user_id
+export async function getAmount(user_id: any): Promise<any> {
+
+    const user = await User.find({
+      select: {
+        balance: true
+      },
+      where: {
+        user_id: user_id
+      }
     })
-    .select('amount');
+
+    return user
 }
 
-export function createUserQuery(db: Knex, user: any) {
-  db('user').insert({
+export async function createUserQuery(db: DataSource, user: any) {
+
+  const new_user = User.create({
     first_name: user.first_name,
     last_name: user.last_name,
-    username: user.username
+    username: user.username,
+    password: user.password,
+    email: user.email
   });
+
+  await new_user.save()
 }
 
-export function createUserAccount(db: Knex, user_id: string) {
-  db('account').insert({
-    user_id,
-    balance: 0
-  });
+// export function createUserAccount(db: DataSource, user_id: string) {
+//   db('account').insert({
+//     user_id,
+//     balance: 0
+//   });
+// }
+
+export async function depositQuery(id: number, amount: number) {
+
+  let balance = await getAmount(id)
+  const update = User.upsert(
+      {
+        user_id: id, balance: balance + amount
+      },
+    ['user']
+    )
 }
 
-export function depositQuery(db: Knex, user_id: string, amount: number) {
-  db('account')
-    .where('user_id', '=', Number(user_id))
-    .increment('balance', amount);
+
+export async function withdrawQuery(id: number, amount: number) {
+
+  let balance = await getAmount(id)
+  if (balance < amount) return "Insufficent amount"
+  else {
+    const update =  User.upsert(
+      {
+        user_id: id, balance: balance + amount
+      },
+    ['user']
+    )
+  }
 }
 
-export function withdrawQuery(db: Knex, user_id: string, amount: number) {
-  db('account')
-    .where('user_id', '=', Number(user_id))
-    .decrement('balance', amount);
-}
-
-export function transferQuery(
-  db: Knex,
-  sender: string,
+export async function transferQuery(
+  sender: number,
   receipient: string,
   amount: number
 ) {
   // first check if balance is sufficinet
   const total = amount + get_fee(amount);
-  let sender_balance = getAmount(db, sender);
-  let receiver_balance = getAmount(db, receipient);
+  let sender_balance = await getAmount(sender);
+  const receipientU = await getUserID(receipient)
+  let receipientID = 0
+  receipientU ? (receipientID = receipientU.user_id ) : null
+  let receiver_balance = await getAmount(receipient);
   if (sender_balance < total) {
     return { error: 'insufficient balance for transaction' };
   } else {
@@ -59,29 +94,38 @@ export function transferQuery(
     receiver_balance = receiver_balance + amount;
 
     // update sender amount in db
-    db('account')
-      .where('user_id', '=', sender)
-      .update({ amount: sender_balance });
+      await User.upsert(
+        {
+          user_id: sender, balance: sender_balance
+        },
+      ['user']
+      )
 
     // update receiver amount in db
-    db('account')
-      .where('user_id', '=', sender)
-      .update({ amount: sender_balance });
+    await User.upsert(
+      {
+        user_id: receipientID, balance: receiver_balance
+      },
+    ['user']
+    )
   }
 }
 
-export async function getUser({
-  db,
-  username,
-  id
-}: {
-  db: Knex;
-  username?: string;
-  id?: string;
-}) {
-  return (
-    await db('user')
-      .where({ ...(username && { username }), ...(id && { id }) })
-      .select('id first_name last')
-  )[0];
+
+export async function getUserID(username: string) {
+  return User.findOne({
+    where: {
+      username: username
+    }
+  })
+}
+
+// For Authetication
+export async function getUser(username: string, password: string) {
+  return await User.findOne({
+    where: {
+      username: username,
+      password: password
+    }
+  })
 }

@@ -1,29 +1,30 @@
 import { RequestHandler } from 'express';
 import Joi from 'joi';
-import db from '../database/knex';
 import {
-  createUserAccount,
+  
   depositQuery,
   getUser,
   transferQuery,
-  withdrawQuery
+  withdrawQuery,
+  getUserID
 } from '../database/queries';
+// createUserAccount, part of imports
 
-export const createAccount: RequestHandler = (req, res, next) => {
-  try {
-    const { userId } = req;
-    createUserAccount(db, userId);
-    return res
-      .status(201)
-      .json({ message: 'user account created successfully' });
-  } catch (error) {
-    next(error);
-  }
-};
+// export const createAccount: RequestHandler = (req, res, next) => {
+//   try {
+//     const { userId } = req;
+//     createUserAccount(db, userId);
+//     return res
+//       .status(201)
+//       .json({ message: 'user account created successfully' });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 export const fundUserAccount: RequestHandler = (req, res, next) => {
   try {
-    const { userId } = req;
+    const userId = req.body.user_id;
     const schema = Joi.object({
       amount: Joi.number().required()
     });
@@ -32,7 +33,7 @@ export const fundUserAccount: RequestHandler = (req, res, next) => {
       return res.status(400).json({ message: error.details[0].message });
     }
 
-    depositQuery(db, userId, req.body.amount);
+    depositQuery(userId, req.body.amount); // M
 
     return res
       .status(200)
@@ -44,7 +45,7 @@ export const fundUserAccount: RequestHandler = (req, res, next) => {
 
 export const withdrawFromUserAccount: RequestHandler = (req, res, next) => {
   try {
-    const { userId } = req;
+    const userId = req.body.user_id;
     const schema = Joi.object({
       amount: Joi.number().required()
     });
@@ -52,7 +53,7 @@ export const withdrawFromUserAccount: RequestHandler = (req, res, next) => {
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
-    withdrawQuery(db, userId, req.body.amount);
+    withdrawQuery(userId, req.body.amount);
 
     return res.status(200).json({ message: 'withdrawal successful' });
   } catch (error) {
@@ -66,7 +67,8 @@ export const transferToAnotherAccount: RequestHandler = async (
   next
 ) => {
   try {
-    const { userId } = req;
+    const userId = req.body.user_id;
+    const receiver_name: string = req.body.receiver
     const schema = Joi.object({
       amount: Joi.number().required(),
       receiver: Joi.string().required()
@@ -76,16 +78,13 @@ export const transferToAnotherAccount: RequestHandler = async (
       return res.status(400).json({ message: error.details[0].message });
     }
 
-    const { amount, receiver } = req.body;
-    const user = await getUser({
-      db,
-      username: receiver
-    });
+    const { amount, receiver } = req.body.amount
+    const user = await getUserID(receiver_name);
     if (!user) {
       throw new Error('invalid username');
     }
 
-    await transferQuery(db, userId, user.id, amount);
+    await transferQuery(userId, receiver, amount);
 
     return res.status(200).json({ message: 'transfer successful' });
   } catch (error) {
