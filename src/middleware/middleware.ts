@@ -5,7 +5,7 @@
 
 import { RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
-import { getUser } from '../database/queries';
+import { getUser } from '../entity/queries';
 
 export const authenticate: RequestHandler = async (req, res, next) => {
   try {

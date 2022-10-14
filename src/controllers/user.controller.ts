@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 import Joi from 'joi';
-import db from '../database/db.init';
-import { createUserQuery, getUser } from '../database/queries';
+import db from '../entity/db.init';
+import { createUserQuery, getUser } from '../entity/queries';
 import jwt from 'jsonwebtoken';
 import { hashPassword, hashCompare } from '../utils/hash';
 
@@ -15,7 +15,7 @@ export const createNewUser: RequestHandler = async (req, res, next) => {
     });
     req.body.password = hashPassword(req.body.password)
     console.log(req.body)
-    const { first_name, last_name, username, password } = req.body;
+    const { username, first_name, last_name, password } = req.body;
     createUserQuery(db, { username, first_name, last_name, password });
     return res.status(201).json({ message: 'user created successfully' });
   } catch (error) {

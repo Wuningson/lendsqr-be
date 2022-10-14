@@ -1,9 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, Unique, OneToMany, BaseEntity } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, Unique, OneToMany, BaseEntity, CreateDateColumn } from "typeorm";
 import { Transaction } from "./transaction.entity";
 
 @Entity('user')
 @Unique(['username', 'email'])
-export class User extends BaseEntity{
+export class User {
     @PrimaryGeneratedColumn()
     user_id!: number
 
@@ -30,8 +30,11 @@ export class User extends BaseEntity{
 
     @OneToMany(
         () => Transaction,
-        (transaction) => transaction.user_id
+        (transaction) => transaction.user
     )
     transactions: Transaction[] | undefined;
+
+    @CreateDateColumn()
+    joined!: Date
 
 }

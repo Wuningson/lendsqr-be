@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, ManyToOne
 import { User } from "./user.entity";
 
 @Entity('transaction')
-export class Transaction extends BaseEntity{
+export class Transaction {
 
     @PrimaryGeneratedColumn()
     transaction_id!: number
@@ -19,15 +19,14 @@ export class Transaction extends BaseEntity{
     })
     transaction_amount!: number
 
-    @Column()
-    user_id!: bigint
-
     @ManyToOne(
         () => User,
-        (user) => user.transactions
+        (user) => user.transactions,
+        {
+            onDelete: 'CASCADE'
+        }
     )
-    @JoinColumn()
-    account_id!: User
+    user!: User;
 
     @CreateDateColumn()
     created_at!: Date

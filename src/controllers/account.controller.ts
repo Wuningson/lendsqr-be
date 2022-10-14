@@ -7,7 +7,7 @@ import {
   transferQuery,
   withdrawQuery,
   getUserID
-} from '../database/queries';
+} from '../entity/queries';
 // createUserAccount, part of imports
 
 // export const createAccount: RequestHandler = (req, res, next) => {
